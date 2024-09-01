@@ -50,7 +50,8 @@ const getNavigatorLanguage = (): string => {
 
 export interface DateRangeFormatOptions {
   today?: Date;
-  locale?: string;
+  locale?: Locale;
+  timeLocale?: string;
   includeTime?: boolean;
   separator?: string;
 }
@@ -60,7 +61,8 @@ export const formatDateRange = (
   to: Date,
   {
     today = new Date(),
-    locale = getNavigatorLanguage(),
+    locale,
+    timeLocale = getNavigatorLanguage(),
     includeTime = true,
     separator = "-",
   }: DateRangeFormatOptions = {}
@@ -73,7 +75,7 @@ export const formatDateRange = (
 
   const yearSuffix = thisYear ? "" : `, ${format(to, "yyyy")}`;
 
-  const formatTime = createFormatTime(locale);
+  const formatTime = createFormatTime(timeLocale);
 
   const startTimeSuffix =
     includeTime && !isSameMinute(startOfDay(from), from)
@@ -89,7 +91,7 @@ export const formatDateRange = (
     isSameMinute(startOfYear(from), from) &&
     isSameMinute(endOfYear(to), to)
   ) {
-    return `${format(from, "yyyy")}`;
+    return `${format(from, "yyyy", { locale })}`;
   }
 
   // Check if the range is an entire quarter
@@ -99,7 +101,7 @@ export const formatDateRange = (
     isSameMinute(endOfQuarter(to), to) &&
     getQuarter(from) === getQuarter(to)
   ) {
-    return `Q${getQuarter(from)} ${format(from, "yyyy")}`;
+    return `Q${getQuarter(from)} ${format(from, "yyyy", { locale })}`;
   }
 
   // Check if the range is across entire month
@@ -109,10 +111,10 @@ export const formatDateRange = (
   ) {
     if (sameMonth && sameYear) {
       // Example: January 2023
-      return `${format(from, "LLLL yyyy")}`;
+      return `${format(from, "LLLL yyyy", { locale })}`;
     }
     // Example: Jan - Feb 2023
-    return `${format(from, "LLL")} ${separator} ${format(to, "LLL yyyy")}`;
+    return `${format(from, "LLL", { locale })} ${separator} ${format(to, "LLL yyyy", { locale })}`;
   }
 
   // Range across years
@@ -120,19 +122,22 @@ export const formatDateRange = (
   if (!sameYear) {
     return `${format(
       from,
-      "LLL d ''yy"
+      "LLL d ''yy",
+      { locale }
     )}${startTimeSuffix} ${separator} ${format(
       to,
-      "LLL d ''yy"
+      "LLL d ''yy",
+      { locale }
     )}${endTimeSuffix}`;
   }
 
   // Range across months
   // Example: Jan 1 - Feb 12[, 2023]
   if (!sameMonth) {
-    return `${format(from, "LLL d")}${startTimeSuffix} ${separator} ${format(
+    return `${format(from, "LLL d", { locale })}${startTimeSuffix} ${separator} ${format(
       to,
-      "LLL d"
+      "LLL d",
+      { locale }
     )}${endTimeSuffix}${yearSuffix}`;
   }
 
@@ -141,16 +146,18 @@ export const formatDateRange = (
     // Check for a time suffix, if so print the month twice
     // Example: Jan 1, 12:00pm - Jan 2, 1:00pm[, 2023]
     if (startTimeSuffix || endTimeSuffix) {
-      return `${format(from, "LLL d")}${startTimeSuffix} ${separator} ${format(
+      return `${format(from, "LLL d", { locale })}${startTimeSuffix} ${separator} ${format(
         to,
-        "LLL d"
+        "LLL d",
+        { locale }
       )}${endTimeSuffix}${yearSuffix}`;
     }
 
     // Example: Jan 1 - 12[, 2023]
-    return `${format(from, "LLL d")} ${separator} ${format(
+    return `${format(from, "LLL d", { locale })} ${separator} ${format(
       to,
-      "d"
+      "d",
+      { locale }
     )}${yearSuffix}`;
   }
 
@@ -166,11 +173,12 @@ export const formatDateRange = (
     // Example: Jan 1, 12pm - 1pm[, 2023]
     return `${format(
       from,
-      "LLL d"
+      "LLL d",
+      { locale }
     )}${startTimeSuffix} ${separator} ${formatTime(to)}${yearSuffix}`;
   }
 
   // Full day
   // Example: Fri, Jan 1[, 2023]
-  return `${format(from, "eee, LLL d")}${yearSuffix}`;
+  return `${format(from, "eee, LLL d", { locale })}${yearSuffix}`;
 };
